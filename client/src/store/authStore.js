@@ -1,24 +1,69 @@
 import { create } from 'zustand';
+import { authApi } from '../api/auth.api';
 
-const useAuthStore = create((set) => ({
-  user: null,
-  accessToken: localStorage.getItem('accessToken') || null,
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+export const useAuthStore = create((set) => ({
+  user: JSON.parse(localStorage.getItem('user')) || null,
+  token: localStorage.getItem('token') || null,
+  isAuthenticated: !!localStorage.getItem('token'),
+  isLoading: false,
+  error: null,
 
-  setAuth: (user, accessToken, refreshToken) => {
-    localStorage.setItem('accessToken', accessToken);
-    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-    set({ user, accessToken, isAuthenticated: true });
+  login: async (credentials) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await authApi.login(credentials);
+      const { user, accessToken } = response.data;
+      
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('activeWorkspace', user.activeWorkspace);
+
+      set({
+        user,
+        token: accessToken,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      return true;
+    } catch (error) {
+      set({ error: error.message || 'Login failed', isLoading: false });
+      return false;
+    }
   },
 
-  setUser: (user) => set({ user }),
+  register: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await authApi.register(data);
+      const { user, accessToken } = response.data;
+      
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('activeWorkspace', user.activeWorkspace);
 
-  logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('activeWorkspaceId');
-    set({ user: null, accessToken: null, isAuthenticated: false });
+      set({
+        user,
+        token: accessToken,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      return true;
+    } catch (error) {
+      set({ error: error.message || 'Registration failed', isLoading: false });
+      return false;
+    }
+  },
+
+  logout: async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Logout error', error);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('activeWorkspace');
+      set({ user: null, token: null, isAuthenticated: false });
+    }
   },
 }));
-
-export default useAuthStore;

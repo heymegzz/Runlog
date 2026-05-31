@@ -24,14 +24,14 @@ app.get('/api/health', (_req, res) => {
 });
 
 // --------------- Routes (uncomment as you build) ---------------
-// import authRoutes from './src/routes/auth.routes.js';
+import authRoutes from './src/routes/auth.routes.js';
 // import workspaceRoutes from './src/routes/workspace.routes.js';
 // import jobRoutes from './src/routes/job.routes.js';
 // import executionRoutes from './src/routes/execution.routes.js';
 // import analyticsRoutes from './src/routes/analytics.routes.js';
 // import apikeyRoutes from './src/routes/apikey.routes.js';
 
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 // app.use('/api/workspaces', workspaceRoutes);
 // app.use('/api/jobs', jobRoutes);
 // app.use('/api/executions', executionRoutes);

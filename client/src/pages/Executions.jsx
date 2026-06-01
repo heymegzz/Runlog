@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import * as execApi from '../api/executions.api';
 import { Link } from 'react-router-dom';
 import { relativeTime } from '../utils/time';
+import EmptyState from '../components/EmptyState/EmptyState';
+import { IconActivity } from '../components/Icons/Icons';
 
 const Executions = () => {
   const [executions, setExecutions] = useState([]);
@@ -47,18 +49,18 @@ const Executions = () => {
         </div>
       )}
 
-      <div className="card" style={{ padding: 0 }}>
+      <div className="table-panel">
         {loading ? (
           <div className="flex-center" style={{ padding: '4rem' }}><div className="spinner"></div></div>
         ) : executions.length === 0 && !error ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">📝</div>
-            <div className="empty-state-title">No executions yet</div>
-            <div className="empty-state-text">Your job execution history will appear here.</div>
-          </div>
+          <EmptyState
+            icon={IconActivity}
+            title="No executions yet"
+            text="Your job execution history will appear here once schedules start firing."
+          />
         ) : (
           <>
-            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+            <div className="table-wrapper">
               <table>
                 <thead>
                   <tr>
@@ -92,23 +94,25 @@ const Executions = () => {
             </div>
             
             {totalPages > 1 && (
-              <div className="pagination" style={{ padding: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <button 
-                  className="page-btn btn btn-secondary btn-sm" 
-                  disabled={page === 0} 
-                  onClick={() => setPage(p => p - 1)}
+              <div className="pagination-bar">
+                <button
+                  type="button"
+                  className="page-btn btn btn-secondary btn-sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
                 >
-                  &larr; Prev
+                  Prev
                 </button>
-                <span className="text-muted" style={{ fontSize: '0.85rem', margin: '0 1rem' }}>
+                <span className="pagination-label">
                   Page {page + 1} of {totalPages}
                 </span>
-                <button 
-                  className="page-btn btn btn-secondary btn-sm" 
-                  disabled={page >= totalPages - 1} 
-                  onClick={() => setPage(p => p + 1)}
+                <button
+                  type="button"
+                  className="page-btn btn btn-secondary btn-sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
                 >
-                  Next &rarr;
+                  Next
                 </button>
               </div>
             )}

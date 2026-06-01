@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { useToast } from '../../hooks/useToast';
+import EmptyState from '../../components/EmptyState/EmptyState';
+import { IconKey, IconPlus } from '../../components/Icons/Icons';
 
 const ApiKeys = () => {
   const [keys, setKeys] = useState([]);
@@ -66,24 +68,30 @@ const ApiKeys = () => {
           <h1 className="page-title">API Keys</h1>
           <p className="page-subtitle">Manage programmatic access to your workspace.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setCreatedKey(null); setShowModal(true); }}>
-          + Generate New Key
+        <button type="button" className="btn btn-primary btn-with-icon" onClick={() => { setCreatedKey(null); setShowModal(true); }}>
+          <IconPlus size={16} />
+          Generate key
         </button>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div className="card" style={{ padding: 0 }}>
+      <div className="table-panel">
         {loading ? (
           <div className="flex-center" style={{ padding: '4rem' }}><div className="spinner"></div></div>
         ) : keys.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">🔑</div>
-            <div className="empty-state-title">No API keys generated</div>
-            <div className="empty-state-text">Generate an API key to access RunLog via scripts or external services.</div>
-          </div>
+          <EmptyState
+            icon={IconKey}
+            title="No API keys yet"
+            text="Generate a key to access Runlog from scripts or external services."
+          >
+            <button type="button" className="btn btn-primary btn-with-icon" style={{ marginTop: '1.25rem' }} onClick={() => { setCreatedKey(null); setShowModal(true); }}>
+              <IconPlus size={16} />
+              Generate key
+            </button>
+          </EmptyState>
         ) : (
-          <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+          <div className="table-wrapper">
             <table>
               <thead>
                 <tr>

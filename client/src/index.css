@@ -484,7 +484,7 @@ button { font-family: inherit; }
   font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-secondary);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   flex-shrink: 0;
 }
 
@@ -1012,9 +1012,7 @@ tbody td {
   padding: 3rem 1rem;
   text-align: center;
 }
-.empty-state-icon { font-size: 2rem; margin-bottom: 1rem; opacity: 0.5; }
-.empty-state-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem; }
-.empty-state-text { font-size: 0.82rem; color: var(--text-muted); max-width: 320px; }
+/* empty-state — see styles/app.css */
 
 /* =========================================================
    FILTER / SEARCH

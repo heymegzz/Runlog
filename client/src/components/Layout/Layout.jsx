@@ -3,6 +3,7 @@ import { useAuthStore } from '../../store/authStore';
 import NotificationBell from '../NotificationBell/NotificationBell';
 import Toast from '../Toast/Toast';
 import Logo from '../Brand/Logo';
+import { IconLogOut } from '../Icons/Icons';
 
 const Layout = () => {
   const { user, logout, token } = useAuthStore();
@@ -17,7 +18,7 @@ const Layout = () => {
     : '??';
 
   return (
-    <div className="layout">
+    <div className="layout app-layout">
       {/* Sidebar */}
       <aside className="sidebar">
         <Logo to="/dashboard" unified className="sidebar-logo brand--nav" />
@@ -70,7 +71,10 @@ const Layout = () => {
             <div className="user-avatar">{initials}</div>
             <div className="user-info">
               <div className="user-name">{user?.name || 'User'}</div>
-              <div className="user-role">Logout →</div>
+              <div className="user-role">
+                <IconLogOut size={12} />
+                Sign out
+              </div>
             </div>
           </div>
         </div>

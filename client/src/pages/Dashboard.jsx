@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { relativeTime } from '../utils/time';
 import Logo from '../components/Brand/Logo';
+import EmptyState from '../components/EmptyState/EmptyState';
+import { IconPlus, IconArrowRight, IconRadio, IconJobs, IconActivity } from '../components/Icons/Icons';
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -30,18 +32,27 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
-  if (loading) return <div className="page-content flex-center"><div className="spinner"></div></div>;
+  if (loading) {
+    return (
+      <div className="flex-center" style={{ padding: '4rem' }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Welcome back, {user?.name}!</h1>
-          <p className="page-subtitle">Here's what's happening in your {user?.activeWorkspace} workspace.</p>
+          <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0] || 'there'}</h1>
+          <p className="page-subtitle">
+            {user?.activeWorkspace || 'Workspace'} · overview and live runs
+          </p>
         </div>
         {stats?.jobs?.total > 0 && (
-          <Link to="/jobs/new" className="btn btn-primary">
-            + New Job
+          <Link to="/jobs/new" className="btn btn-primary btn-with-icon">
+            <IconPlus size={16} />
+            New job
           </Link>
         )}
       </div>
@@ -49,21 +60,22 @@ const Dashboard = () => {
       {error && (
         <div className="alert alert-error" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>{error}</span>
-          <button className="btn btn-ghost btn-sm" onClick={fetchStats}>Retry</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={fetchStats}>
+            Retry
+          </button>
         </div>
       )}
 
       {!error && stats?.jobs?.total === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-          <Logo size="lg" className="empty-state-brand" />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 500, marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>
-            Welcome to Runlog
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '360px', margin: '0 auto 1.5rem' }}>
-            Schedule your first HTTP job and see it execute in real time.
+        <div className="page-empty">
+          <Logo size="lg" unified className="empty-state-brand" />
+          <h2 className="page-empty-title">Welcome to Runlog</h2>
+          <p className="page-empty-text">
+            Schedule your first HTTP job and watch every run stream in real time.
           </p>
-          <Link to="/jobs/new" className="btn btn-primary">
-            Create your first job →
+          <Link to="/jobs/new" className="btn btn-primary btn-with-icon">
+            Create your first job
+            <IconArrowRight size={16} />
           </Link>
         </div>
       ) : (
@@ -71,74 +83,81 @@ const Dashboard = () => {
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon purple">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <IconJobs size={22} />
               </div>
               <div className="stat-body">
                 <div className="stat-value">{stats?.jobs?.total || 0}</div>
-                <div className="stat-label">Total Jobs</div>
+                <div className="stat-label">Total jobs</div>
               </div>
             </div>
-            
             <div className="stat-card">
               <div className="stat-icon green">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                <IconActivity size={22} />
               </div>
               <div className="stat-body">
                 <div className="stat-value">{stats?.executions?.total || 0}</div>
-                <div className="stat-label">Total Executions</div>
+                <div className="stat-label">Total executions</div>
               </div>
             </div>
-
             <div className="stat-card">
               <div className="stat-icon amber">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <path d="M22 4 12 14.01 9 11.01" />
+                </svg>
               </div>
               <div className="stat-body">
                 <div className="stat-value">{stats?.executions?.successRate || 0}%</div>
-                <div className="stat-label">Success Rate</div>
+                <div className="stat-label">Success rate</div>
               </div>
             </div>
-
             <div className="stat-card">
               <div className="stat-icon red">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4M12 16h.01" />
+                </svg>
               </div>
               <div className="stat-body">
                 <div className="stat-value">{stats?.executions?.failed || 0}</div>
-                <div className="stat-label">Failed Executions</div>
+                <div className="stat-label">Failed runs</div>
               </div>
             </div>
           </div>
 
-          <div className="form-row" style={{ marginTop: '2rem' }}>
+          <div className="dashboard-split">
             <div className="card">
               <div className="card-header">
-                <h3 className="card-title">Live Executions</h3>
+                <h3 className="card-title">Live executions</h3>
+                <IconRadio size={16} style={{ color: 'var(--green)' }} />
               </div>
-              <div className="execution-log">
+              <div className="live-feed execution-log">
                 {liveExecutions.length === 0 ? (
-                  <div className="empty-state" style={{ padding: '2rem 1rem' }}>
-                    <div className="empty-state-text">Waiting for executions...</div>
-                  </div>
+                  <div className="live-feed-empty">Waiting for executions…</div>
                 ) : (
                   liveExecutions.map((exec, idx) => (
-                    <div key={idx} className={`log-entry ${exec.status}`}>
+                    <div key={idx} className="log-entry">
                       <div className="log-job-name">{exec.jobName}</div>
                       <div className={`log-status ${exec.status}`}>{exec.status.toUpperCase()}</div>
                       <div className="log-duration">{exec.durationMs}ms</div>
-                      <div className="log-time" title={new Date(exec.executedAt).toLocaleString()}>{relativeTime(exec.executedAt)}</div>
+                      <div className="log-time" title={new Date(exec.executedAt).toLocaleString()}>
+                        {relativeTime(exec.executedAt)}
+                      </div>
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            <div className="card">
-              <div className="card-header">
-                <h3 className="card-title">Recent History</h3>
-                <Link to="/executions" className="btn btn-ghost btn-sm">View All</Link>
+            <div className="card" style={{ padding: 0 }}>
+              <div className="card-header" style={{ padding: '1rem 1.25rem', marginBottom: 0 }}>
+                <h3 className="card-title">Recent history</h3>
+                <Link to="/executions" className="btn btn-ghost btn-sm btn-with-icon">
+                  View all
+                  <IconArrowRight size={14} />
+                </Link>
               </div>
-              <div className="table-wrapper">
+              <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
                 <table>
                   <thead>
                     <tr>
@@ -149,9 +168,11 @@ const Dashboard = () => {
                   </thead>
                   <tbody>
                     {stats?.recentExecutions?.length > 0 ? (
-                      stats.recentExecutions.slice(0, 5).map(ex => (
+                      stats.recentExecutions.slice(0, 5).map((ex) => (
                         <tr key={ex._id}>
-                          <td className="truncate" style={{ maxWidth: '150px' }}>{ex.job?.name || 'Deleted Job'}</td>
+                          <td className="truncate" style={{ maxWidth: '150px' }}>
+                            {ex.job?.name || 'Deleted job'}
+                          </td>
                           <td>
                             <span className={`badge badge-${ex.status}`}>{ex.status}</span>
                           </td>
@@ -162,7 +183,9 @@ const Dashboard = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="3" className="text-center text-muted" style={{ padding: '2rem' }}>No recent executions</td>
+                        <td colSpan="3" className="text-center text-muted" style={{ padding: '2rem' }}>
+                          No recent executions
+                        </td>
                       </tr>
                     )}
                   </tbody>

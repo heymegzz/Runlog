@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import * as jobsApi from '../../api/jobs.api';
 import JobCard from '../../components/JobCard/JobCard';
 import { useToast } from '../../hooks/useToast';
+import EmptyState from '../../components/EmptyState/EmptyState';
+import { IconJobs, IconPlus } from '../../components/Icons/Icons';
 
 const JobList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,8 +83,9 @@ const JobList = () => {
           <h1 className="page-title">Jobs</h1>
           <p className="page-subtitle">Manage your scheduled API requests.</p>
         </div>
-        <Link to="/jobs/new" className="btn btn-primary">
-          + New Job
+        <Link to="/jobs/new" className="btn btn-primary btn-with-icon">
+          <IconPlus size={16} />
+          New job
         </Link>
       </div>
 
@@ -114,18 +117,18 @@ const JobList = () => {
           <div className="spinner"></div>
         </div>
       ) : filteredJobs.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">⚡</div>
-          <div className="empty-state-title">No jobs found</div>
-          <div className="empty-state-text">
-            {searchTerm ? 'Try adjusting your search filters.' : 'Create your first scheduled job to get started.'}
-          </div>
+        <EmptyState
+          icon={IconJobs}
+          title="No jobs found"
+          text={searchTerm ? 'Try adjusting your search filters.' : 'Create your first scheduled job to get started.'}
+        >
           {!searchTerm && (
-            <Link to="/jobs/new" className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
-              Create Job
+            <Link to="/jobs/new" className="btn btn-primary btn-with-icon" style={{ marginTop: '1.25rem' }}>
+              <IconPlus size={16} />
+              Create job
             </Link>
           )}
-        </div>
+        </EmptyState>
       ) : (
         <>
           <div className="jobs-grid">
@@ -140,23 +143,25 @@ const JobList = () => {
           </div>
           
           {totalPages > 1 && (
-            <div className="pagination" style={{ padding: '1rem', marginTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <button 
-                className="page-btn btn btn-secondary btn-sm" 
-                disabled={page <= 1} 
+            <div className="pagination-bar" style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+              <button
+                type="button"
+                className="page-btn btn btn-secondary btn-sm"
+                disabled={page <= 1}
                 onClick={() => setSearchParams({ page: page - 1, limit })}
               >
-                &larr; Prev
+                Prev
               </button>
-              <span className="text-muted" style={{ fontSize: '0.85rem', margin: '0 1rem' }}>
+              <span className="pagination-label">
                 Page {page} of {totalPages}
               </span>
-              <button 
-                className="page-btn btn btn-secondary btn-sm" 
-                disabled={page >= totalPages} 
+              <button
+                type="button"
+                className="page-btn btn btn-secondary btn-sm"
+                disabled={page >= totalPages}
                 onClick={() => setSearchParams({ page: page + 1, limit })}
               >
-                Next &rarr;
+                Next
               </button>
             </div>
           )}

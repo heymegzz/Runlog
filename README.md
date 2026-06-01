@@ -2,6 +2,8 @@
 
 Distributed job scheduling platform: cron-driven HTTP callbacks, Bull queue execution, real-time execution feed (Socket.io), and workspace-based multi-tenancy.
 
+**Live app:** [https://runlog-eta.vercel.app](https://runlog-eta.vercel.app)
+
 ## Stack
 
 | Layer | Tech |
@@ -83,62 +85,53 @@ docker compose down          # keep volumes
 docker compose down -v       # wipe Mongo/Redis data
 ```
 
-## Production deployment
+## Production (Vercel + Render)
 
-### Option A — Single VPS (Docker Compose)
+| Piece | Host |
+|-------|------|
+| Frontend | [https://runlog-eta.vercel.app](https://runlog-eta.vercel.app) (Vercel, root `client/`) |
+| API | Render (root `server/`) |
+| MongoDB | [Atlas](https://www.mongodb.com/atlas) |
+| Redis | [Upstash](https://upstash.com) — required for Bull job queue |
 
-Same as above on a VM (DigitalOcean, Hetzner, EC2):
+### Render — service settings
 
-1. Point DNS `app.yourdomain.com` → server IP.
-2. Put **Caddy** or **Nginx** in front of port `8080` with TLS (Let’s Encrypt).
-3. Set in root `.env`:
-   - `CLIENT_URL=https://app.yourdomain.com`
-   - Strong `JWT_SECRET` / `REFRESH_TOKEN_SECRET`
-4. Use managed MongoDB/Redis URLs in `docker-compose.yml` instead of bundled containers for reliability.
-5. Run `docker compose up -d --build` after each deploy.
+| Setting | Value |
+|---------|--------|
+| Root Directory | `server` |
+| Build Command | `npm install` |
+| Start Command | `npm start` |
+| Node | `NODE_VERSION=20.19.0` |
 
-### Option B — Split hosting (common)
+### Render — environment variables
 
-| Component | Suggested hosts |
-|-----------|-----------------|
-| Static React | Vercel, Netlify, Cloudflare Pages, S3 + CloudFront |
-| API + worker + cron | Railway, Render, Fly.io, ECS, a VPS |
-| MongoDB | Atlas |
-| Redis | Upstash, ElastiCache, Redis Cloud |
+| Key | Value |
+|-----|--------|
+| `NODE_ENV` | `production` |
+| `NODE_VERSION` | `20.19.0` |
+| `MONGODB_URI` | Atlas connection string (`.../runlog?...`) |
+| `REDIS_URL` | Upstash **Redis** URL (`rediss://...` — not the REST URL) |
+| `JWT_SECRET` | `openssl rand -hex 32` |
+| `REFRESH_TOKEN_SECRET` | `openssl rand -hex 32` |
+| `CLIENT_URL` | `https://runlog-eta.vercel.app` |
 
-**Frontend build**
+Do not set `PORT` manually on Render.
+
+### Vercel — after Render is live
+
+Set `VITE_API_URL=https://YOUR-SERVICE.onrender.com/api` and **redeploy** the frontend.
+
+### Verify
 
 ```bash
-cd client
-VITE_API_URL=https://api.yourdomain.com/api npm run build
+curl https://YOUR-SERVICE.onrender.com/api/health
 ```
 
-Upload `client/dist` or connect the repo to your static host.
+Seed (Render shell): `node scripts/seed.js` → `demo@runlog.dev` / `demo123`
 
-**Backend**
+### Docker (optional, one VPS)
 
-- Set env: `MONGODB_URI`, `REDIS_URL`, `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, `CLIENT_URL=https://app.yourdomain.com`, `PORT=5005`, `NODE_ENV=production`
-- Run **one** process that executes `node index.js` (includes HTTP API, cron scanner, and Bull worker).
-- Ensure Redis and MongoDB are reachable from the API region.
-- Open outbound HTTPS for job callbacks.
-
-**CORS**
-
-`CLIENT_URL` must exactly match the browser origin of your React app (scheme + host + port).
-
-**WebSockets**
-
-If the UI and API share a domain via a reverse proxy, use relative `VITE_API_URL=/api` and proxy `/socket.io` to the API (see `client/nginx.conf`). If they are on different domains, set `VITE_API_URL` to the full API URL and allow WebSocket connections on the API load balancer.
-
-### Option C — CI/CD
-
-GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`:
-
-- Server install (Node 20.19.0)
-- Client `npm ci` + `npm run build`
-- Docker image build on `main` only
-
-Wire your registry (GHCR/Docker Hub) and deploy hooks as needed.
+Use `docker compose up --build -d` — see [Docker Compose](#docker-compose-recommended-for-demos--vps) above.
 
 ## Environment variables
 
@@ -148,7 +141,7 @@ Wire your registry (GHCR/Docker Hub) and deploy hooks as needed.
 |----------|----------|-------------|
 | `MONGODB_URI` | Yes | Mongo connection string |
 | `JWT_SECRET` | Yes | Access token signing secret |
-| `REDIS_URL` | Yes | Redis URL for Bull queue |
+| `REDIS_URL` | Yes | Upstash **Redis** URL (`rediss://...`) for Bull — not the REST API URL |
 | `REFRESH_TOKEN_SECRET` | No* | Refresh tokens (*falls back to `JWT_SECRET`) |
 | `CLIENT_URL` | Yes (prod) | Frontend origin for CORS |
 | `PORT` | No | Default `5005` |

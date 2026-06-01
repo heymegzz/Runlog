@@ -15,6 +15,7 @@ import { createServer } from 'http';
 import rateLimit from 'express-rate-limit';
 
 import connectDB from './src/config/db.js';
+import { corsOrigin } from './src/config/cors.js';
 import { initSocketIO } from './src/sockets/socketHandler.js';
 
 const app = express();
@@ -30,7 +31,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -63,9 +64,17 @@ const PORT = process.env.PORT || 5005;
 
 import startCronScanner from './src/scheduler/cronScanner.js';
 import startWorker      from './src/scheduler/worker.js';
+import { waitForJobQueue } from './src/config/redis.js';
 
 const start = async () => {
   await connectDB();
+
+  try {
+    await waitForJobQueue();
+  } catch (err) {
+    console.error('FATAL: Could not connect to Redis/Bull queue:', err.message);
+    process.exit(1);
+  }
 
   // Initialize Socket.IO (must come before worker so socket is ready)
   initSocketIO(httpServer);

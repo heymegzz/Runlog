@@ -1,13 +1,14 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import WorkspaceMember from '../models/WorkspaceMember.js';
+import { getAllowedOrigins } from '../config/cors.js';
 
 let io;
 
 export const initSocketIO = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: getAllowedOrigins(),
       methods: ['GET', 'POST'],
       credentials: true,
     },

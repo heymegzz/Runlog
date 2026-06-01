@@ -1,3 +1,5 @@
+import { relativeTime } from '../../utils/time';
+
 const ExecutionLog = ({ logs }) => {
   return (
     <div className="execution-log">
@@ -14,7 +16,9 @@ const ExecutionLog = ({ logs }) => {
             <div className="mono text-muted" style={{ fontSize: '0.75rem', width: '40px', textAlign: 'right' }}>
               {log.statusCode}
             </div>
-            <div className="log-time">{new Date(log.executedAt).toLocaleTimeString()}</div>
+            <div className="log-time" title={new Date(log.executedAt).toLocaleString()}>
+              {relativeTime(log.executedAt)}
+            </div>
           </div>
         ))
       )}

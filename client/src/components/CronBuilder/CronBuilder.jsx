@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import cronstrue from 'cronstrue';
 
 const PRESETS = [
   { label: 'Every Minute', value: '* * * * *' },
@@ -10,11 +11,21 @@ const PRESETS = [
 ];
 
 const CronBuilder = ({ value, onChange, error }) => {
-  // Simple validation logic for UI purposes
   const isValidCron = (cronStr) => {
     const parts = cronStr.trim().split(/\s+/);
     return parts.length === 5 || parts.length === 6;
   };
+
+  let humanReadable = '';
+  if (isValidCron(value)) {
+    try {
+      humanReadable = cronstrue.toString(value);
+    } catch {
+      humanReadable = 'Invalid expression';
+    }
+  } else {
+    humanReadable = 'Cron must have 5 or 6 space-separated fields';
+  }
 
   return (
     <div className="cron-builder">
@@ -33,21 +44,15 @@ const CronBuilder = ({ value, onChange, error }) => {
       
       <input
         type="text"
-        className={`cron-expression ${error ? 'error' : ''}`}
+        className={`cron-expression ${error || humanReadable === 'Invalid expression' ? 'error' : ''}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="* * * * *"
       />
       
-      {isValidCron(value) ? (
-        <div className="cron-preview text-success">
-          Valid cron expression
-        </div>
-      ) : (
-        <div className="cron-preview text-warning">
-          Cron must have 5 or 6 space-separated fields
-        </div>
-      )}
+      <div className={`cron-preview ${humanReadable.startsWith('Invalid') || humanReadable.startsWith('Cron') ? 'text-warning' : 'text-success'}`}>
+        {humanReadable}
+      </div>
     </div>
   );
 };

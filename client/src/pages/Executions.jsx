@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as execApi from '../api/executions.api';
 import { Link } from 'react-router-dom';
+import { relativeTime } from '../utils/time';
 
 const Executions = () => {
   const [executions, setExecutions] = useState([]);
@@ -12,6 +13,7 @@ const Executions = () => {
 
   const fetchExecutions = async (skip = 0) => {
     setLoading(true);
+    setError(null);
     try {
       const data = await execApi.listExecutions({ skip, limit });
       setExecutions(data.data.executions || []);
@@ -38,12 +40,17 @@ const Executions = () => {
         </div>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && (
+        <div className="alert alert-error" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{error}</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => fetchExecutions(page * limit)}>Retry</button>
+        </div>
+      )}
 
       <div className="card" style={{ padding: 0 }}>
         {loading ? (
           <div className="flex-center" style={{ padding: '4rem' }}><div className="spinner"></div></div>
-        ) : executions.length === 0 ? (
+        ) : executions.length === 0 && !error ? (
           <div className="empty-state">
             <div className="empty-state-icon">📝</div>
             <div className="empty-state-title">No executions yet</div>
@@ -75,7 +82,9 @@ const Executions = () => {
                       </td>
                       <td className="mono">{ex.durationMs}ms</td>
                       <td className={`mono ${ex.status === 'failed' ? 'text-error' : ''}`}>{ex.statusCode}</td>
-                      <td className="text-muted" style={{ fontSize: '0.85rem' }}>{new Date(ex.executedAt).toLocaleString()}</td>
+                      <td className="text-muted" style={{ fontSize: '0.85rem' }} title={new Date(ex.executedAt).toLocaleString()}>
+                        {relativeTime(ex.executedAt)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -83,23 +92,23 @@ const Executions = () => {
             </div>
             
             {totalPages > 1 && (
-              <div className="pagination" style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
+              <div className="pagination" style={{ padding: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <button 
-                  className="page-btn" 
+                  className="page-btn btn btn-secondary btn-sm" 
                   disabled={page === 0} 
                   onClick={() => setPage(p => p - 1)}
                 >
-                  &larr;
+                  &larr; Prev
                 </button>
                 <span className="text-muted" style={{ fontSize: '0.85rem', margin: '0 1rem' }}>
                   Page {page + 1} of {totalPages}
                 </span>
                 <button 
-                  className="page-btn" 
+                  className="page-btn btn btn-secondary btn-sm" 
                   disabled={page >= totalPages - 1} 
                   onClick={() => setPage(p => p + 1)}
                 >
-                  &rarr;
+                  Next &rarr;
                 </button>
               </div>
             )}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
+import { useToast } from '../../hooks/useToast';
 
 const ApiKeys = () => {
   const [keys, setKeys] = useState([]);
@@ -10,6 +11,8 @@ const ApiKeys = () => {
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyExpiry, setNewKeyExpiry] = useState('');
   const [createdKey, setCreatedKey] = useState(null);
+
+  const { showToast } = useToast();
 
   const fetchKeys = async () => {
     setLoading(true);
@@ -38,8 +41,9 @@ const ApiKeys = () => {
       setNewKeyName('');
       setNewKeyExpiry('');
       fetchKeys();
+      showToast({ message: 'API key generated', type: 'success' });
     } catch (err) {
-      alert('Failed to create key: ' + err.message);
+      showToast({ message: 'Failed to create key: ' + err.message, type: 'error' });
     }
   };
 
@@ -49,8 +53,9 @@ const ApiKeys = () => {
     try {
       await api.delete(`/api-keys/${id}`);
       setKeys(keys.filter(k => k._id !== id));
+      showToast({ message: 'API key revoked', type: 'success' });
     } catch (err) {
-      alert('Failed to revoke key: ' + err.message);
+      showToast({ message: 'Failed to revoke key: ' + err.message, type: 'error' });
     }
   };
 
@@ -132,7 +137,7 @@ const ApiKeys = () => {
                 <div className="form-actions" style={{ borderTop: 'none', marginTop: '1rem' }}>
                   <button className="btn btn-primary" onClick={() => {
                     navigator.clipboard.writeText(createdKey.rawKey);
-                    alert('Copied to clipboard!');
+                    showToast({ message: 'Copied to clipboard!', type: 'success' });
                     setShowModal(false);
                     setCreatedKey(null);
                   }}>

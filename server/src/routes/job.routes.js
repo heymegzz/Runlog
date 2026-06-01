@@ -5,9 +5,11 @@ import {
   getJob,
   updateJob,
   deleteJob,
-  toggleStatus,
+  pauseJob,
+  resumeJob,
   triggerJob,
 } from '../controllers/job.controller.js';
+import { listJobExecutions } from '../controllers/execution.controller.js';
 import authenticate from '../middleware/authenticate.js';
 import requireWorkspace from '../middleware/requireWorkspace.js';
 import requireRole from '../middleware/requireRole.js';
@@ -24,7 +26,11 @@ router.patch('/:id', requireRole(['admin', 'owner', 'developer']), updateJob);
 router.delete('/:id', requireRole(['admin', 'owner']), deleteJob);
 
 // Actions
-router.post('/:id/toggle', requireRole(['admin', 'owner', 'developer']), toggleStatus);
+router.post('/:id/pause', requireRole(['admin', 'owner', 'developer']), pauseJob);
+router.post('/:id/resume', requireRole(['admin', 'owner', 'developer']), resumeJob);
 router.post('/:id/trigger', requireRole(['admin', 'owner', 'developer']), triggerJob);
+
+// Executions for a specific job
+router.get('/:id/executions', listJobExecutions);
 
 export default router;

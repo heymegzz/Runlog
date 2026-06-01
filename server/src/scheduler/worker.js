@@ -2,7 +2,7 @@ import axios from 'axios';
 import jobQueue from '../queues/jobQueue.js';
 import Job from '../models/Job.js';
 import Execution from '../models/Execution.js';
-import { emitExecutionUpdate, emitJobUpdated } from '../sockets/socketHandler.js';
+import { emitExecutionUpdate } from '../sockets/socketHandler.js';
 import { sendFailureAlert } from '../services/notification.service.js';
 
 const startWorker = () => {
@@ -17,8 +17,8 @@ const startWorker = () => {
 
     const startTime = Date.now();
     let status = 'success';
-    let responsePayload = null;
-    let errorDetails = null;
+    let responsePayload = '';
+    let errorDetails = '';
     let statusCode = null;
 
     try {
@@ -42,20 +42,21 @@ const startWorker = () => {
           : JSON.stringify(response.data);
     } catch (err) {
       status = 'failed';
-      statusCode = err.response?.status || 0;
+      statusCode = err.response?.status || null;
       errorDetails = err.message;
       responsePayload = err.response?.data
-        ? JSON.stringify(err.response.data)
-        : null;
+        ? (typeof err.response.data === 'string' ? err.response.data : JSON.stringify(err.response.data))
+        : '';
     }
 
     const durationMs = Date.now() - startTime;
+    const executedAt = new Date(startTime);
 
     // Save Execution record
     const execution = new Execution({
       job: dbJob._id,
       workspace: dbJob.workspace,
-      executedAt: new Date(startTime),
+      executedAt,
       status,
       statusCode,
       durationMs,
@@ -66,20 +67,31 @@ const startWorker = () => {
     await execution.save();
 
     // Update Job metrics
-    dbJob.lastRunAt = execution.executedAt;
-    dbJob.lastRunStatus = status;
+    const updateObj = {
+      $set: {
+        lastRunAt: executedAt,
+        lastRunStatus: status
+      },
+      $inc: {}
+    };
+
     if (status === 'success') {
-      dbJob.successCount = (dbJob.successCount || 0) + 1;
+      updateObj.$inc.successCount = 1;
     } else {
-      dbJob.failureCount = (dbJob.failureCount || 0) + 1;
+      updateObj.$inc.failureCount = 1;
     }
-    await dbJob.save();
+
+    await Job.updateOne({ _id: dbJob._id }, updateObj);
+
+    // Fetch the updated job or just use the local state to emit updates
+    dbJob.lastRunAt = executedAt;
+    dbJob.lastRunStatus = status;
 
     console.log(
       `[Worker] Job "${dbJob.name}" → ${status.toUpperCase()} (${statusCode}) in ${durationMs}ms`
     );
 
-    // Emit real-time update to workspace room
+    // Emit real-time update
     emitExecutionUpdate(dbJob.workspace.toString(), {
       executionId: execution._id.toString(),
       jobId: dbJob._id.toString(),
@@ -87,24 +99,15 @@ const startWorker = () => {
       status,
       statusCode,
       durationMs,
-      executedAt: execution.executedAt,
+      executedAt,
     });
 
-    emitJobUpdated(dbJob.workspace.toString(), {
-      jobId: dbJob._id.toString(),
-      lastRunStatus: status,
-      lastRunAt: dbJob.lastRunAt,
-      successCount: dbJob.successCount,
-      failureCount: dbJob.failureCount,
-    });
-
-    // Send alert if job failed and alerting is configured
+    // Send alert if job failed
     if (status === 'failed') {
       await sendFailureAlert(dbJob, execution).catch((alertErr) =>
         console.error('[Worker] Failed to send alert:', alertErr.message)
       );
-      // Re-throw so Bull records it as a failed job for retry logic
-      throw new Error(`Job execution failed: ${errorDetails}`);
+      throw new Error(errorDetails || 'Job execution failed');
     }
   });
 

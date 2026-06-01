@@ -39,3 +39,22 @@ export const getExecution = async (req, res, next) => {
     next(err);
   }
 };
+
+export const listJobExecutions = async (req, res, next) => {
+  try {
+    const query = { job: req.params.id, workspace: req.workspace._id };
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = parseInt(req.query.skip) || 0;
+
+    const executions = await Execution.find(query)
+      .sort({ executedAt: -1 })
+      .limit(limit)
+      .skip(skip);
+
+    const total = await Execution.countDocuments(query);
+
+    return success(res, { executions, total, skip, limit });
+  } catch (err) {
+    next(err);
+  }
+};

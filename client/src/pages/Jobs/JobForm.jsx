@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import * as jobsApi from '../../api/jobs.api';
 import CronBuilder from '../../components/CronBuilder/CronBuilder';
+import { useToast } from '../../hooks/useToast';
 
 const JobForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
@@ -35,9 +37,10 @@ const JobForm = () => {
           
           let headersStr = '';
           if (job.callbackHeaders) {
-            headersStr = Object.entries(job.callbackHeaders)
-              .map(([k, v]) => `${k}: ${v}`)
-              .join('\n');
+            const headersObj = job.callbackHeaders instanceof Map
+              ? Object.fromEntries(job.callbackHeaders)
+              : job.callbackHeaders;
+            headersStr = Object.entries(headersObj).map(([k, v]) => `${k}: ${v}`).join('\n');
           }
 
           setFormData({
@@ -86,13 +89,17 @@ const JobForm = () => {
 
       if (isEditing) {
         await jobsApi.updateJob(id, payload);
+        showToast({ message: 'Job updated', type: 'success' });
       } else {
         await jobsApi.createJob(payload);
+        showToast({ message: 'Job created successfully', type: 'success' });
       }
       
       navigate('/jobs');
     } catch (err) {
-      setError(err.message || 'Failed to save job');
+      const errMsg = err.message || 'Failed to save job';
+      setError(errMsg);
+      showToast({ message: `Failed: ${errMsg}`, type: 'error' });
       setSaving(false);
     }
   };

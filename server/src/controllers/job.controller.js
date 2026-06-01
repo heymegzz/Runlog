@@ -108,19 +108,28 @@ export const deleteJob = async (req, res, next) => {
   }
 };
 
-export const toggleStatus = async (req, res, next) => {
+export const pauseJob = async (req, res, next) => {
   try {
     const job = await Job.findOne({ _id: req.params.id, workspace: req.workspace._id });
     if (!job) return error(res, 'NOT_FOUND', 'Job not found', 404);
 
-    job.status = job.status === 'active' ? 'paused' : 'active';
-    
-    if (job.status === 'active') {
-      // Recalculate next run to avoid instant firing of backlogged schedules
-      const interval = cronParser.parseExpression(job.schedule);
-      job.nextRunAt = interval.next().toDate();
-    }
+    job.status = 'paused';
+    await job.save();
+    return success(res, job);
+  } catch (err) {
+    next(err);
+  }
+};
 
+export const resumeJob = async (req, res, next) => {
+  try {
+    const job = await Job.findOne({ _id: req.params.id, workspace: req.workspace._id });
+    if (!job) return error(res, 'NOT_FOUND', 'Job not found', 404);
+
+    job.status = 'active';
+    const interval = cronParser.parseExpression(job.schedule);
+    job.nextRunAt = interval.next().toDate();
+    
     await job.save();
     return success(res, job);
   } catch (err) {

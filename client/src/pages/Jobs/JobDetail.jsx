@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import * as jobsApi from '../../api/jobs.api';
 import * as execApi from '../../api/executions.api';
 import { useSocket } from '../../hooks/useSocket';
+import { relativeTime } from '../../utils/time';
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -133,7 +134,7 @@ const JobDetail = () => {
             {job.nextRunAt && (
               <div>
                 <div className="text-muted" style={{ fontSize: '0.75rem' }}>Next Run</div>
-                <div style={{ marginTop: '0.25rem' }}>{new Date(job.nextRunAt).toLocaleString()}</div>
+                <div style={{ marginTop: '0.25rem' }} title={new Date(job.nextRunAt).toLocaleString()}>{relativeTime(job.nextRunAt)}</div>
               </div>
             )}
           </div>
@@ -150,7 +151,7 @@ const JobDetail = () => {
                   <div className={`log-status ${ex.status}`} style={{ width: '60px' }}>{ex.status.toUpperCase()}</div>
                   <div className="log-duration">{ex.durationMs}ms</div>
                   <div className="mono text-muted" style={{ fontSize: '0.75rem', flex: 1, textAlign: 'right' }}>{ex.statusCode}</div>
-                  <div className="log-time">{new Date(ex.executedAt).toLocaleString()}</div>
+                  <div className="log-time" title={new Date(ex.executedAt).toLocaleString()}>{relativeTime(ex.executedAt)}</div>
                 </div>
               ))
             )}

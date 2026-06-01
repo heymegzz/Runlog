@@ -1,67 +1,41 @@
-name: RunLog CI/CD Pipeline
+name: RunLog CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
-  test-server:
+  ci:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
-    
+
     services:
       mongodb:
-        image: mongo:latest
+        image: mongo:7
         ports:
           - 27017:27017
       redis:
-        image: redis:latest
+        image: redis:7-alpine
         ports:
           - 6379:6379
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.19.0'
-        cache: 'npm'
-        cache-dependency-path: ./server/package-lock.json
-    
-    - name: Install Dependencies
-      run: npm ci
+      - uses: actions/checkout@v4
 
-    # Optional: If there are unit tests configured in package.json, uncomment below
-    # - name: Run Tests
-    #   run: npm test
-    #   env:
-    #     MONGODB_URI: mongodb://localhost:27017/runlog_test
-    #     REDIS_URL: redis://localhost:6379
-    #     JWT_SECRET: test_secret
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
 
-  build-client:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./client
+      - name: Install & verify server
+        working-directory: server
+        run: npm ci
 
-    steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.19.0'
-        cache: 'npm'
-        cache-dependency-path: ./client/package-lock.json
-
-    - name: Install Dependencies
-      run: npm ci
-
-    - name: Build React App
-      run: npm run build
-      env:
-        NODE_ENV: production
+      - name: Install & build client
+        working-directory: client
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+        env:
+          NODE_ENV: production
+          VITE_API_URL: https://runlog-1.onrender.com/api

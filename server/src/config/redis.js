@@ -1,12 +1,55 @@
 import Bull from 'bull';
 import IORedis from 'ioredis';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+/**
+ * Normalize REDIS_URL — fixes common copy-paste mistakes from Upstash / redis-cli.
+ */
+export const normalizeRedisUrl = (raw) => {
+  if (!raw || typeof raw !== 'string') {
+    return 'redis://localhost:6379';
+  }
 
-if (REDIS_URL.includes('upstash.io') && !REDIS_URL.startsWith('redis')) {
-  console.error(
-    '[Redis] REDIS_URL looks like an Upstash REST URL. Use the Redis URL (redis:// or rediss://) from Upstash → Connect → Redis.'
-  );
+  let url = raw.trim();
+
+  // Pasted full command: redis-cli --tls -u redis://default:pass@host:6379
+  if (url.includes('redis-cli')) {
+    const matches = url.match(/rediss?:\/\/[^\s'"]+/gi);
+    if (matches?.length) {
+      url = matches[matches.length - 1];
+      console.warn('[Redis] REDIS_URL contained redis-cli text; using extracted URL.');
+    }
+  }
+
+  // Stray quotes or whitespace
+  url = url.replace(/^['"]|['"]$/g, '').trim();
+
+  if (!/^rediss?:\/\//i.test(url)) {
+    throw new Error(
+      'REDIS_URL must start with redis:// or rediss://. ' +
+        'On Render, set only the URL from Upstash (Connect → Redis), not the redis-cli command.'
+    );
+  }
+
+  // Upstash requires TLS
+  if (url.includes('upstash.io') && url.startsWith('redis://')) {
+    url = url.replace(/^redis:\/\//i, 'rediss://');
+  }
+
+  try {
+    new URL(url);
+  } catch {
+    throw new Error(
+      `REDIS_URL is not a valid URL. Example: rediss://default:PASSWORD@host.upstash.io:6379`
+    );
+  }
+
+  return url;
+};
+
+const REDIS_URL = normalizeRedisUrl(process.env.REDIS_URL);
+
+if (process.env.REDIS_URL && process.env.REDIS_URL !== REDIS_URL) {
+  console.log('[Redis] Using normalized REDIS_URL for connection');
 }
 
 const usesTls = REDIS_URL.startsWith('rediss://');

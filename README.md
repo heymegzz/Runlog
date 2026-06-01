@@ -77,7 +77,7 @@ curl http://localhost:5005/api/health
 | `NODE_ENV` | `production` |
 | `NODE_VERSION` | `20.19.0` |
 | `MONGODB_URI` | Atlas connection string (`.../runlog?...`) |
-| `REDIS_URL` | Upstash **Redis** URL (`rediss://...` — not the REST URL) |
+| `REDIS_URL` | Upstash **Redis** URL only (`rediss://default:pass@….upstash.io:6379`) — not `redis-cli` command or REST URL |
 | `JWT_SECRET` | `openssl rand -hex 32` |
 | `REFRESH_TOKEN_SECRET` | `openssl rand -hex 32` |
 | `CLIENT_URL` | `https://runlog-eta.vercel.app` |

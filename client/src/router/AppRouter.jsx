@@ -4,6 +4,12 @@ import ProtectedRoute from './ProtectedRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Dashboard from '../pages/Dashboard';
+import JobList from '../pages/Jobs/JobList';
+import JobForm from '../pages/Jobs/JobForm';
+import JobDetail from '../pages/Jobs/JobDetail';
+import Executions from '../pages/Executions';
+import Team from '../pages/Settings/Team';
+import ApiKeys from '../pages/Settings/ApiKeys';
 import NotFound from '../pages/NotFound';
 
 const AppRouter = () => {
@@ -15,10 +21,16 @@ const AppRouter = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
-          {/* We will build these out in later phases */}
-          <Route path="/jobs" element={<div className="page-content">Jobs Coming Soon</div>} />
-          <Route path="/executions" element={<div className="page-content">Executions Coming Soon</div>} />
-          <Route path="/settings/team" element={<div className="page-content">Settings Coming Soon</div>} />
+          
+          <Route path="/jobs" element={<JobList />} />
+          <Route path="/jobs/new" element={<JobForm />} />
+          <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/jobs/:id/edit" element={<JobForm />} />
+          
+          <Route path="/executions" element={<Executions />} />
+          
+          <Route path="/settings/team" element={<Team />} />
+          <Route path="/settings/api-keys" element={<ApiKeys />} />
         </Route>
       </Route>
 

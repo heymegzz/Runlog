@@ -1,17 +1,57 @@
-// Cron scanner — runs every minute, finds due jobs, pushes to Bull queue
-// Implement in Phase 3
+import cron from 'node-cron';
+import cronParser from 'cron-parser';
+import Job from '../models/Job.js';
+import jobQueue from '../queues/jobQueue.js';
 
-// import cron from 'node-cron';
-// import { CronExpressionParser } from 'cron-parser';
-// import Job from '../models/Job.js';
-// import jobQueue from '../queues/jobQueue.js';
+let isScanning = false;
 
-// cron.schedule('* * * * *', async () => {
-//   const now = new Date();
-//   const jobs = await Job.find({ status: 'active', nextRunAt: { $lte: now } }).lean();
-//   for (const job of jobs) {
-//     await jobQueue.add({ jobId: job._id }, { ... });
-//   }
-// });
+const startCronScanner = () => {
+  // Run every minute at the 0th second
+  cron.schedule('* * * * *', async () => {
+    if (isScanning) return;
+    isScanning = true;
 
-console.log('🔧 Cron scanner file loaded — implement in Phase 3');
+    try {
+      const now = new Date();
+      
+      // Find all active jobs that are due
+      const dueJobs = await Job.find({
+        status: 'active',
+        nextRunAt: { $lte: now }
+      });
+
+      if (dueJobs.length > 0) {
+        console.log(`[CronScanner] Found ${dueJobs.length} due jobs.`);
+      }
+
+      for (const job of dueJobs) {
+        try {
+          // Push to Bull queue for execution
+          await jobQueue.add(
+            { jobId: job._id },
+            { 
+              jobId: job._id.toString(), // Prevent duplicates in queue
+              removeOnComplete: true,
+              removeOnFail: false 
+            }
+          );
+
+          // Calculate next run
+          const interval = cronParser.parseExpression(job.schedule);
+          job.nextRunAt = interval.next().toDate();
+          await job.save();
+        } catch (jobErr) {
+          console.error(`[CronScanner] Error processing job ${job._id}:`, jobErr);
+        }
+      }
+    } catch (err) {
+      console.error('[CronScanner] Error during scan:', err);
+    } finally {
+      isScanning = false;
+    }
+  });
+
+  console.log('✅ Cron scanner initialized');
+};
+
+export default startCronScanner;

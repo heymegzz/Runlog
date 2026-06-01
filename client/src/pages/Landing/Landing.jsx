@@ -491,8 +491,8 @@ function InteractiveTerminal() {
         const seq = TERM_CMDS[c];
         let li = 0;
         const outTick = setInterval(() => {
-          setLines((prev) => [...prev, seq[li]]);
           li += 1;
+          setLines(seq.slice(0, li));
           if (li >= seq.length) {
             clearInterval(outTick);
             setRunning(false);
